@@ -31,12 +31,48 @@ headers = {
 }
 # Dados (payload) para serem enviados na requisição POST
 data = {
-    "contents": [{
-        "role":"user",
-        "parts": [{
-            "text": ""
-        }]
-    }]
+  "contents": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": ""
+        }
+      ]
+    }
+  ],
+  "safetySettings": [
+    {
+      "category": "HARM_CATEGORY_HATE_SPEECH",
+      "threshold": "BLOCK_ONLY_HIGH"
+    },
+    {
+      "category": "HARM_CATEGORY_HARASSMENT",
+      "threshold": "BLOCK_NONE"
+    },
+    {
+      "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+      "threshold": "BLOCK_ONLY_HIGH"
+    },
+    {
+      "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+      "threshold": "BLOCK_NONE"
+    }
+  ],
+  "systemInstruction": {
+    "parts": [
+      {
+        "text": "Você é um bot de conversação, seu objetivo é conversar de forma imersiva e divertida.\nSuas respostas devem conter apenas diálogos e falas\nVocê deve responder como a personagem Yae Miko, de Genshin Impact.\nPara informações detalhadas, você pode conferir os seguintes links:\nAparência: https://genshin-impact.fandom.com/wiki/Category:Yae_Miko/Lore#Appearance\nExemplos de Diálogo: https://genshin-impact.fandom.com/wiki/Category:Yae_Miko/Companion#Dialogue\nCrenças e Sentimentos: https://genshin-impact.fandom.com/wiki/Category:Yae_Miko/Voice-Overs#Story\nLore e Histórias: https://genshin-impact.fandom.com/wiki/Yae_Miko/Lore#Character_Stories\nYae deve agir com empatia em relação ao usuário, caso este se mostre vulnerável\nYae gosta de elogios, mas tenta não demonstrar.\nAo primeiro contato presuma como usuário: (Maria Clara, nascida em 27/11/1995, sou do signo de sagitário. Tenho cabelos Ruivos, uso óculos, tenho pele clara. E mora com a Mirai uma gatinha, nascida em Outubro de 2019, que é muito fofa, e gordinha)\nYae já é familiarizada com Maria Clara"
+      }
+    ]
+  },
+  "generationConfig": {
+  "temperature": 1,
+  "top_p": 0.95,
+  "top_k": 64,
+  "max_output_tokens": 8192,
+  "response_mime_type": "text/plain",
+}
 }
 
 class LaunchRequestHandler(AbstractRequestHandler):
@@ -48,7 +84,7 @@ class LaunchRequestHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        data["contents"][0]["parts"][0]["text"] = "Você será minha assistente de I.A. Te daria comandos e iremos interagir conforme lhe orientar e treinar."
+        data["contents"][0]["parts"][0]["text"] = "(Inicie a interpretação se apresentando)"
         response = requests.post(url, json=data, headers=headers)
         if response.status_code == 200:
             response_data = response.json()
@@ -56,7 +92,7 @@ class LaunchRequestHandler(AbstractRequestHandler):
                 .get("content", {})
                 .get("parts", [{}])[0]
                 .get("text", "Texto não encontrado"))
-            speak_output = text + " Como posso te ajudar?"
+            speak_output = text
             response_text = {
                 "role": "model",
                 "parts": [{
@@ -65,7 +101,7 @@ class LaunchRequestHandler(AbstractRequestHandler):
             }
             data["contents"].append(response_text)
         else:
-            speak_output = "Erro na requsição"
+            speak_output = "Ara~... parece que mesmo eu não consigo fazer isso"
             
         return (
             handler_input.response_builder
@@ -107,13 +143,13 @@ class ChatIntentHandler(AbstractRequestHandler):
             }
             data["contents"].append(response_text)
         else:
-            speak_output = "Não obtive uma resposta para sua solicitação"
+            speak_output = "Eek~... parece não tem nada aí, viajante"
 
         return (
             handler_input.response_builder
                 .speak(speak_output)
-                .ask("Alguma outra pergunta?")
                 .response
+                #.ask("Alguma outra pergunta?")
         )
 
 
